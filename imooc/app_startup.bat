@@ -1,0 +1,1 @@
+nodemon --debug F:\studyspace\imooc\app
