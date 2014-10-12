@@ -4,11 +4,10 @@ block content
 	.container
 		.row
 			each item in movies
-				.col-md-2
+				.col-md-3
 					.thumbnail
 						a(href="/movie/#{item._id}",target="_blank")
 							img(src="#{item.poster}",alt="#{item.title}")
 						.caption
 							h4 #{item.title}
-							p: a.btn.btn-primary(href="/movie/#{item._id}",rol="botton", target="_blank")
-								观看预告片
+							p: a.btn.btn-primary(href="/movie/#{item._id}",rol="botton", target="_blank") 观看预告片

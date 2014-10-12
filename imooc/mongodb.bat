@@ -1,1 +1,1 @@
-mongod --dbpath "D:\Program Files\mongodb\imooc"
+mongod --dbpath "D:\Developement Soft\mongodb\imooc"

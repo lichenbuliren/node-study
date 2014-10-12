@@ -4,15 +4,18 @@
  */
 
 var express = require('express');
-var routes = require('./routes');
-var user = require('./routes/user');
+// var routes = require('./routes');
 var http = require('http');
 var mongoose = require('mongoose');
+var mongoStore = require('connect-mongo')(express);
 var _ = require('lodash');
 var Movie = require('./models/Movie');
+var User = require('./models/User');
 var path = require('path');
-
 var app = express();
+var dbUrl = 'mongodb://localhost/imooc';
+app.locals.moment = require('moment');
+
 mongoose.connect('mongodb://localhost:27017/imooc');
 
 // all environments
@@ -39,9 +42,16 @@ app.use(express.methodOverride());
 
 //express.cookieParser()是Cookie解析的中间件
 app.use(express.cookieParser());
+app.use(express.session({
+	secret: 'imooc',
+	store: new mongoStore({
+		url: dbUrl,
+		connection: 'session'
+	});
+}));
 
-app.use(app.router);
-app.use(express.static(path.join(__dirname, 'bower_components')));
+// app.use(app.router);
+app.use(express.static(path.join(__dirname, 'public')));
 
 // development only
 if ('development' == app.get('env')) {
@@ -50,6 +60,8 @@ if ('development' == app.get('env')) {
 
 // index page
 app.get('/', function(req,res){
+	console.log('user in session');
+	console.log(req.session.user);
 	Movie.fetch(function(err,movies){
 		if(err){
 			console.log(err);
@@ -57,6 +69,60 @@ app.get('/', function(req,res){
 		res.render('index',{
 			title: 'imooc 首页',
 			movies: movies
+		});
+	});
+});
+
+//signup
+app.post('/user/signup',function(req,res){
+	var _user = req.body.user;
+	var user = new User(_user);
+	user.save(function(err,user){
+		if(err){
+			console.log(err);
+		}
+		res.redirect('/');
+	});
+});
+
+//signin
+app.post('/user/signin',function(req,res){
+	var _user = req.body.user;
+	var _name = _user.name;
+	var _password = _user.password;
+	User.findOne({name: _name},function(err,user){
+		if(err){
+			console.log("user find name err : " + err);
+		}
+		if(!user){
+			return res.redirect('/signup');
+		}
+
+		user.comparePassword(_password,function(err,isMatch){
+			if(err){
+				console.log(err);
+			}
+			if(isMatch){
+				console.log('password is matched');
+				req.session.user = user;
+				return res.redirect('/admin/userlist');
+			}else{
+				console.log('password is not matched');
+				return res.redirect('/');
+			}
+		});
+	});
+});
+
+// list users page
+app.get('/admin/userlist', function(req,res){
+	User.fetch(function(err,users){
+		if(err){
+			console.log(err);
+		}
+		res.render('userlist',{
+			title: 'imooc 用户列表页',
+			users: users
 		});
 	});
 });
@@ -94,25 +160,10 @@ app.get('/admin/movie', function(req,res){
 	});
 });
 
-//admin update movie
-app.get('/admin/update/:id',function(req,res){
-	var id = req.params.id;
-	if(id){
-		Movie.findById(id,function(err,movie) {
-			res.render('admin',{
-				title: 'imooc 后台录入页',
-				movie: movie
-			});
-		})
-	}
-});
-
 //admin post movie
 app.post('/admin/movie/new',function(req,res){
 	var id = req.body.movie._id;
-	console.log("id=" + id);
 	var movieObj = req.body.movie;
-	console.dir(movieObj);
 	var _movie;
 	if(id !== 'undefined'){
 		Movie.findById(id,function(err,movie) {
@@ -138,7 +189,6 @@ app.post('/admin/movie/new',function(req,res){
 			summary: movieObj.summary,
 			flash: movieObj.flash
 		});
-		console.dir(_movie);
 		_movie.save(function(err,movie) {
 			console.log("save call back");
 			if(err){
@@ -149,14 +199,41 @@ app.post('/admin/movie/new',function(req,res){
 	}
 });
 
+//admin update movie
+app.get('/admin/update/:id',function(req,res){
+	var id = req.params.id;
+	if(id){
+		Movie.findById(id,function(err,movie) {
+			res.render('admin',{
+				title: 'imooc 后台录入页',
+				movie: movie
+			});
+		})
+	}
+});
+
+//list delete movie
+app.delete('/admin/list', function(req,res){
+	var id = req.query.id;
+	if(id){
+		Movie.remove({_id:id}, function(err,movie){
+			if(err){
+				console('list delete movie err:' + err);
+			}else{
+				res.json({success:1});
+			}
+		});
+	}
+})
+
 // list page
 app.get('/admin/list', function(req,res){
 	Movie.fetch(function(err,movies){
 		if(err){
 			console.log(err);
 		}
-		res.render('index',{
-			title: 'imooc 首页',
+		res.render('list',{
+			title: 'imooc 列表页',
 			movies: movies
 		});
 	});

@@ -1,1 +1,1 @@
-nodemon --debug F:\studyspace\imooc\app
+nodemon --debug E:\MyWorkSpace\node-study\imooc\app
