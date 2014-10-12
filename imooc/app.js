@@ -47,7 +47,7 @@ app.use(express.session({
 	store: new mongoStore({
 		url: dbUrl,
 		connection: 'session'
-	});
+	})
 }));
 
 // app.use(app.router);
