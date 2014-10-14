@@ -13,10 +13,11 @@ var Movie = require('./models/Movie');
 var User = require('./models/User');
 var path = require('path');
 var app = express();
-var dbUrl = 'mongodb://localhost/imooc';
+var dbUrl = 'mongodb://localhost:27017/imooc';
 app.locals.moment = require('moment');
 
 mongoose.connect('mongodb://localhost:27017/imooc');
+console.log('mongoose is connected');
 
 // all environments
 app.set('port', process.env.PORT || 3000);
@@ -60,11 +61,11 @@ if ('development' == app.get('env')) {
 
 // index page
 app.get('/', function(req,res){
-	console.log('user in session');
-	console.log(req.session.user);
+	console.log('user in session:' + req.session.user);
 	Movie.fetch(function(err,movies){
 		if(err){
 			console.log(err);
+			res.json({'error': 1,'message':'query movies err' + err});
 		}
 		res.render('index',{
 			title: 'imooc 首页',
@@ -79,7 +80,8 @@ app.post('/user/signup',function(req,res){
 	var user = new User(_user);
 	user.save(function(err,user){
 		if(err){
-			console.log(err);
+			console.log('user signup err: ' + err);
+			res.json({'error':1, 'message':'user singup err ' + err});
 		}
 		res.redirect('/');
 	});
@@ -93,9 +95,11 @@ app.post('/user/signin',function(req,res){
 	User.findOne({name: _name},function(err,user){
 		if(err){
 			console.log("user find name err : " + err);
+			res.json({'error':1, 'message': 'find by username err:' + err});
 		}
 		if(!user){
-			return res.redirect('/signup');
+			console.log('user is not exist');
+			return res.redirect('/');
 		}
 
 		user.comparePassword(_password,function(err,isMatch){
