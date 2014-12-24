@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="Author" content="" />
+    <meta name="Keywords" content="" />
+    <meta name="Description" content="" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,minimal-ui" />
+    <title>Document</title>
+    <style>
+    body {
+        background: url(http://pic.4j4j.cn/upload/pic/20130722/5907914a28.jpg) no-repeat center;
+    }
+    </style>
+</head>
+
+<body>
+    <canvas></canvas>
+    <script>
+    var run = window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || function(b) {
+        setTimeout(b, 16.7)
+    };
+    var snowSize = 10,
+        snowCenter = snowSize / 2,
+        snowNum = 2048,
+        snows = [],
+        speed = 2,
+        WW = window.innerWidth,
+        WH = window.innerHeight;
+
+    function rand(a, b) {
+        return a + Math.random() * (b - a);
+    }
+
+    function Snow() {
+        this.reset(1);
+    }
+    Snow.prototype = {
+        render: function(g) {
+            var x = this.x,
+                y = this.y,
+                z = this.z,
+                r = this.r,
+                speed = this.speed;
+            g.drawImage(snow, 0, 0, snowSize, snowSize, x, y, snowSize * this.z, snowSize * this.z);
+            x = x + Math.cos(r) * speed;
+            y = y + Math.sin(r) * speed;
+            if (x < -snowSize * z || x > WW || y > WH) {
+                this.reset(0.3);
+            } else {
+                this.x = x;
+                this.y = y;
+            }
+        },
+        reset: function(type) {
+            var z = rand(0.1, 1);
+            this.x = rand(0, WW - snowSize);
+            this.y = z > 0.7 && type !== 1 ? -snowSize : rand(-snowSize, WH * type - snowSize);
+            this.speed = Math.max(0.8, speed * z);
+            this.z = z;
+            this.r = Math.PI / 180 * rand(135, 45);
+        }
+    }
+
+    var cvs = document.querySelector("canvas"),
+        snow = cvs.cloneNode(false),
+        sg = snow.getContext("2d"),
+        g = cvs.getContext("2d"),
+        grd = sg.createRadialGradient(snowCenter, snowCenter, 2, snowCenter, snowCenter, snowCenter);
+    cvs.width = WW;
+    cvs.height = WH;
+    snow.width = snowSize;
+    snow.height = snowSize;
+    grd.addColorStop(0, "#FFF");
+    grd.addColorStop(1, "rgba(255,255,255,0.1)");
+    sg.fillStyle = grd;
+    sg.arc(snowCenter, snowCenter, snowCenter, 0, Math.PI * 2, true);
+    sg.fill();
+
+    while (snowNum--) {
+        snows.push(new Snow());
+    }
+
+    function flutter() {
+        g.clearRect(0, 0, WW, WH);
+        snows.forEach(function(s) {
+            s.render(g);
+        });
+        run(arguments.callee);
+    }
+    flutter();
+    window.addEventListener("resize", function() {
+        cvs.width = WW = window.innerWidth;
+        cvs.height = WH = window.innerHeight;
+    }, false);
+    </script>
+</body>
+
+</html>
