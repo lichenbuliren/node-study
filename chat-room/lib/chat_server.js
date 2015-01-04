@@ -12,13 +12,12 @@ var currentRoom = {};
 
 
 exports.listen = function (server) {
-	io = socketio.listen(server);
+	io = socketio(server);
 	io.set('log level', 1);
 
 	io.sockets.on('connection', function (socket) {
 		// 在用户连接上来时，赋予其一个访客名
 		guestNumber = assignGuestName(socket, guestNumber, nickNames, nameUsed);
-
 		// 将用户连接上来时放入lobby
 		joinRoom(socket, 'Lobby');
 
@@ -84,4 +83,64 @@ function joinRoom(socket, room) {
 			text: usersInRoomSummary
 		});
 	}
+}
+
+//处理用户的消息
+function handleMessageBroadcasting(socket,nickNames){
+	socket.on('message',function(message){
+		socket.broadcast.to(message.room).emit('message',{
+			text: nickNames[socket.id] + ': ' + message.text
+		});
+	});
+}
+
+//修改名称
+function handleNameChangeAttempts(socket, nickNames, nameUsed){
+	//添加'nameAttempt'事件的监听器
+	socket.on('nameAttempt',function(name){
+		if(name.indexOf('Guest') == 0){	  //昵称不能以“Guest”开头
+			socket.emit('nameResult',{
+				success: false,
+				message: 'Names cannot begin with "Guest".'
+			});
+		}else{
+			if(nameUsed.indexOf(name) == -1){	//如果还没有注册，就注册该名称
+				var previousName = nickNames[socket.id],
+					previousNameIndex = nameUsed.indexOf(previousName);
+				nameUsed.push(name);
+				nickNames[socket.id] = name;
+				delete nameUsed[previousNameIndex];
+				socket.emit('nameResult',{
+					success: true,
+					name: name
+				});
+
+				socket.broadcast.to(currentRoom[socket.id]).emit('message',{
+					text: previousName + ' is now know as ' + name + '.'
+				});
+			}else{
+				socket.emit('nameResult',{
+					success: false,
+					message: 'That name is already in use'
+				});
+			}
+		}
+	});
+}
+
+//创建房间，如果房间不存在，则新建一个房间
+function handleRoomJoining(socket){
+	socket.on('join',function(room){
+		socket.leave(currentRoom[socket.id]);
+		joinRoom(socket,room.newRoom);
+	})
+}
+
+//清除离开的用户信息
+function handleClientDisconnection(socket, nickNames, nameUsed){
+	socket.on('discount',function(){
+		var nameIndex = nameUsed.indexOf(nickNames[socket.id]);
+		delete nameUsed[nameIndex];
+		delete nickNames[socket.id];
+	});
 }
