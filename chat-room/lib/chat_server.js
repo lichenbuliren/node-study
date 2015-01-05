@@ -1,4 +1,4 @@
-var socketio = require('socket.io');
+var Socketio = require('socket.io');
 
 var io;
 
@@ -10,11 +10,12 @@ var nameUsed = [];
 
 var currentRoom = {};
 
+var userList = {};
+
+var rooms = {};
 
 exports.listen = function (server) {
-	io = socketio(server);
-	io.set('log level', 1);
-
+	io = Socketio.listen(server);
 	io.sockets.on('connection', function (socket) {
 		// 在用户连接上来时，赋予其一个访客名
 		guestNumber = assignGuestName(socket, guestNumber, nickNames, nameUsed);
@@ -28,7 +29,7 @@ exports.listen = function (server) {
 
 		// 当用户发出请求时，向其提供已经被占用的聊天室的列表
 		socket.on('rooms', function () {
-			socket.emit('rooms', io.sockets.manager.rooms);
+			socket.emit('rooms', rooms);
 		});
 
 		// 定义用户断开连接后的清除逻辑
@@ -52,12 +53,31 @@ function assignGuestName(socket, guestNumber, nickNames, nameUsed) {
 	return guestNumber + 1;
 }
 
+//获取同一个房间里面的用户
+function usersInRoom(room){
+	var users = [];
+	for(var id in currentRoom){
+		if(currentRoom[id] === room){
+			users.push(nickNames[id]);
+		}
+	}
+	return users;
+}
+
 // 进入聊天室的逻辑
 function joinRoom(socket, room) {
+
 	// 让用户进入房间
 	socket.join(room);
+
 	// 记录用户的当前房间
 	currentRoom[socket.id] = room;
+	userList[socket.id] = room;
+	if(!rooms[room]){
+		rooms[room] = [];
+	}
+	rooms[room].push(socket.id);
+
 	// 通知用户他进入了新的房间
 	socket.emit('joinResult', {
 		room: room
@@ -69,14 +89,12 @@ function joinRoom(socket, room) {
 	});
 
 	// 读取房间里面的所有用户
-	var usersInRoom = io.sockets.clients(room);
-	if (usersInRoom.length > 1) {
+	var users = usersInRoom(room);
+	console.log(users);
+	if (users.length > 1) {
 		var usersInRoomSummary = 'Users currently in ' + room + ': ';
-		for (var i in usersInRoom) {
-			var userSocketId = usersInRoom[i].id;
-			if (userSocketId != socket.id) {
-				usersInRoomSummary += i > 0 ? ', ' : nickNames[userSocketId];
-			}
+		for (var i = 0, len = users.length; i < len; i++) {
+			usersInRoomSummary += i > 0 ? ', ' + users[i] : users[i];
 		}
 		usersInRoomSummary += '.';
 		socket.emit('message', {
@@ -131,7 +149,16 @@ function handleNameChangeAttempts(socket, nickNames, nameUsed){
 //创建房间，如果房间不存在，则新建一个房间
 function handleRoomJoining(socket){
 	socket.on('join',function(room){
-		socket.leave(currentRoom[socket.id]);
+		var prevRoom = userList[socket.id];
+		socket.leave(prevRoom);
+		var oldUsers = rooms[prevRoom];
+		for (var i = 0, len = oldUsers.length; i < len; i++) {
+			if(oldUsers[i] == socket.id){
+				oldUsers.splice(i,1);
+				return;
+			}
+		}
+		delete userList[socket.id];
 		joinRoom(socket,room.newRoom);
 	})
 }

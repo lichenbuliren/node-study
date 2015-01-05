@@ -16,8 +16,21 @@ a {
     margin-bottom: 1em;
 }
 
+#room-list{
+    float:right;
+    width:200px;
+}
+#room-list div{
+    height:20px;
+    line-height:20px;
+    margin-bottom:10px;
+    border:1px solid #ccc;
+    width:195px;
+    cursor:pointer;
+}
+
 #messages{
-    width: 690px;
+    width: 600px;
     height: 300px;
     overflow: auto;
     background-color: #eee;
