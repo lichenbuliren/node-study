@@ -1,0 +1,17 @@
+extends ../layout
+
+block content
+   h1 Photos
+   p Express stock photo application
+   #photos
+   each photo in photos
+      .photo
+         h2 #{photo.name}
+         a(href="/photo/#{photo.id}/download" target="_blank")
+            img(src="/photos/#{photo.path}")
+
+
+
+
+
+

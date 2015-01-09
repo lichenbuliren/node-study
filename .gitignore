@@ -13,5 +13,6 @@ build
 
 # My configurations:
 */node_modules/
+*/libs/*
 
 *.idea*

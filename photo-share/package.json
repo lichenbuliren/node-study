@@ -2,7 +2,7 @@
   "name": "photo-share",
   "version": "1.0.0",
   "description": "an photo share demo",
-  "repository": ""
+  "repository": "https://github.com/lichenbuliren/node-study.git",
   "main": "app.js",
   "scripts": {
     "start": "node app.js"
@@ -13,12 +13,14 @@
   ],
   "author": "HeavenRu",
   "dependencies": {
-    "express": "^4.10.7",
     "body-parser": "^1.5.2",
+    "connect-busboy": "0.0.2",
     "errorhandler": "^1.1.1",
+    "express": "^4.10.7",
     "express-session": "^1.7.2",
     "jade": "^1.5.0",
     "method-override": "^2.1.2",
+    "mongoose": "^3.8.21",
     "morgan": "^1.2.2",
     "multer": "^0.1.3",
     "serve-favicon": "^2.0.1"
