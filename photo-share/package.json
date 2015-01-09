@@ -1,0 +1,26 @@
+{
+  "name": "photo-share",
+  "version": "1.0.0",
+  "description": "an photo share demo",
+  "repository": ""
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "keywords": [
+    "Express",
+    "connect"
+  ],
+  "author": "HeavenRu",
+  "dependencies": {
+    "express": "^4.10.7",
+    "body-parser": "^1.5.2",
+    "errorhandler": "^1.1.1",
+    "express-session": "^1.7.2",
+    "jade": "^1.5.0",
+    "method-override": "^2.1.2",
+    "morgan": "^1.2.2",
+    "multer": "^0.1.3",
+    "serve-favicon": "^2.0.1"
+  }
+}
